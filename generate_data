@@ -1,0 +1,61 @@
+import pandas as pd
+import random
+from datetime import datetime, timedelta
+
+# Definitionen
+institutes = ['Inst1', 'Inst2', 'Inst3']
+geraete = ["CT Somatom", "GE Discovery", "Siemens goUp", "Aquilion"]
+aerzte = ["Dr. House", "Dr. Nick", "Dr. Grey", "Dr. Gray", "John Dorian", "Perry Cox"]
+regionen_data = {
+    'Gehirn': [55, 13],
+    'Gesichtsschädel': [20, 12],
+    'NNH': [7, 10],
+    'Hals': [15, 19],
+    # Fügen Sie hier weitere Regionen und entsprechende Werte ein
+}
+regionen = list(regionen_data.keys())
+hersteller = {"CT Somatom": "Siemens", "GE Discovery": "GE Healthcare", "Siemens goUp": "Siemens", "Aquilion": "Canon"}
+
+# DataFrame erstellen
+df = pd.DataFrame(columns=['Geschlecht', 'Alter', 'Gewicht', 'Groesse', 'Institut', 'CTDI_vol', 'SSDE', 'DLP', 'mA', 'mAs', 'kV', 'Zeit', 'Datum', 'Scanlaenge', 'Geraet', 'Arzt', 'Untersuchungsregion', 'Hersteller'])
+
+# 2500 Patientendaten generieren
+for i in range(2500):
+    geschlecht = 'M' if random.randint(0, 1) == 0 else 'F'
+    alter = random.randint(18, 99)
+    gewicht = round(random.uniform(50, 100), 1) if geschlecht == 'M' else round(random.uniform(45, 75), 1)
+    groesse = random.randint(157, 195) if geschlecht == 'M' else random.randint(150, 185)
+
+    institut = random.choice(institutes)
+    region = random.choice(regionen)
+    ctdi_vol, scanlaenge = regionen_data[region]
+
+    # Ausreißer generieren
+    if random.random() < 0.05: # 5% Chance für einen Ausreißer
+        multiplier = random.choice([2, 4])
+        ctdi_vol *= multiplier
+        scanlaenge *= multiplier
+    else:
+        ctdi_vol = round(ctdi_vol * random.uniform(0.9, 1.1), 1)
+        scanlaenge = round(scanlaenge * random.uniform(0.9, 1.1), 1)
+
+    ssde = round(random.uniform(6, 9), 1)
+    dlp = None if ctdi_vol is None else ctdi_vol * scanlaenge
+    ma = random.randint(290, 340)
+    mas = random.randint(190, 230)
+    kv = random.choice([110, 120, 130])
+    zeit = random.randint(10, 20)
+    datum = (datetime(2023, 7, 1) + timedelta(days=random.randint(0, 364))).strftime('%Y-%m-%d')
+    geraet = random.choice(geraete)
+
+    if geraet == "CT Somatom" and datetime.strptime(datum, '%Y-%m-%d').month in [6, 7, 8]:
+        ctdi_vol *= 1.10 # 10% höhere CTDI_vol für bestimmtes Gerät in den Sommermonaten
+
+    arzt = random.choice(aerzte)
+    hersteller_geraet = hersteller[geraet]
+
+    df.loc[i] = [geschlecht, alter, gewicht, groesse, institut, ctdi_vol, ssde, dlp, ma, mas, kv, zeit, datum, scanlaenge, geraet, arzt, region, hersteller_geraet]
+
+# CSV-Datei speichern
+df.to_csv('patienten_daten.csv', index=False)
+print("CSV-Datei erfolgreich erstellt!")
